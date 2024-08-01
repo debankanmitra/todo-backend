@@ -9,7 +9,8 @@ const taskSchema = new mongoose.Schema({
     dependencies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
     status: { type: String, enum: [STATUS.PENDING, STATUS.IN_PROGRESS, STATUS.COMPLETED], default: STATUS.PENDING },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+    estimatedDuration: { type: Number, default: 0 },
 });
 
 taskSchema.pre('save', function(next) {

@@ -1,12 +1,22 @@
 const Task = require("../models/taskModel");
 const validationService = require("../services/validationService");
+const PriorityService = require("../services/PriorityService");
 const schedulingService = require("../services/schedulingService");
 const notificationService = require("../services/notificationService");
 
 const getAllTasks = async (req, res, next) => {
 	try {
+		data = []
 		const tasks = await Task.find();
-		res.json(tasks);
+
+		for (let task of tasks) {
+			score = await PriorityService.CalculatePriorityScore(task);
+			data.push({
+				task,
+				priority: score,
+			});
+		}
+		res.json(data);
 	} catch (error) {
 		next(error);
 	}
@@ -14,7 +24,7 @@ const getAllTasks = async (req, res, next) => {
 
 const createTask = async (req, res, next) => {
 	try {
-		const { title, description, priority, dueDate, dependencies } = req.body;
+		const { title, description, priority, dueDate, dependencies, estimatedDuration } = req.body;
 		// validationService.validateTask({ title, description, priority, dueDate, dependencies });
 
 		const newTask = new Task({
@@ -23,6 +33,7 @@ const createTask = async (req, res, next) => {
 			priority,
 			dueDate,
 			dependencies,
+			estimatedDuration,
 		});
 		await newTask.save();
 
@@ -57,12 +68,10 @@ const updateTask = async (req, res, next) => {
 			status === "COMPLETED" &&
 			!(await validationService.CheckCompletion(dependencies))
 		) {
-			return res
-				.status(400)
-				.json({
-					message:
-						"Task cannot be completed because its dependencies are not completed",
-				});
+			return res.status(400).json({
+				message:
+					"Task cannot be completed because its dependencies are not completed",
+			});
 		}
 
 		// Fetch the existing task
@@ -113,14 +122,21 @@ const deleteTask = async (req, res, next) => {
 	}
 };
 
-// const getScheduledTasks = async (req, res, next) => {
-//     try {
-//         const scheduledTasks = await schedulingService.getScheduledTasks();
-//         res.json(scheduledTasks);
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+const getScheduledTasks = async (req, res, next) => {
+    try {
+        const scheduledTasks = await schedulingService.getScheduledTasks();
+		// output in a readable format
+		scheduledTasks.forEach(task => {
+			task.startTime = (new Date(task.startTime)).toLocaleString();
+			task.endTime = (new Date(task.endTime)).toLocaleString();
+		})
+
+        res.json(scheduledTasks);
+    } catch (error) {
+		console.error("Error in getScheduledTasks:", error);
+        next(error);
+    }
+};
 
 // const test = async (req, res, next) => {
 //     res.json({ message: 'Task controller is working' });
@@ -132,6 +148,6 @@ module.exports = {
 	getTaskById,
 	updateTask,
 	deleteTask,
-	// getScheduledTasks,
+	getScheduledTasks,
 	// test
 };

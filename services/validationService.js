@@ -1,5 +1,5 @@
 const Task = require("../models/taskModel");
-const { STATUS } = require('../utils/enums');
+const { STATUS } = require("../utils/enums");
 
 const Validate = async (task) => {
 	// Iterate over each dependency in the current task
@@ -27,9 +27,9 @@ const CheckCompletion = async (dependencies) => {
 		}
 	}
 	return true;
-}
+};
 
 module.exports = {
 	Validate,
-	CheckCompletion
+	CheckCompletion,
 };
