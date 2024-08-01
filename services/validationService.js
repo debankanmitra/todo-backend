@@ -1,4 +1,5 @@
 const Task = require("../models/taskModel");
+const { STATUS } = require('../utils/enums');
 
 const Validate = async (task) => {
 	// Iterate over each dependency in the current task
@@ -18,6 +19,17 @@ const Validate = async (task) => {
 	return true;
 };
 
+const CheckCompletion = async (dependencies) => {
+	for (let dep of dependencies) {
+		const subtask = await Task.findById(dep).exec();
+		if (subtask.status !== STATUS.COMPLETED) {
+			return false;
+		}
+	}
+	return true;
+}
+
 module.exports = {
 	Validate,
+	CheckCompletion
 };
