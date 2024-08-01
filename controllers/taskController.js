@@ -6,7 +6,7 @@ const notificationService = require("../services/notificationService");
 
 const getAllTasks = async (req, res, next) => {
 	try {
-		data = []
+		data = [];
 		const tasks = await Task.find();
 
 		for (let task of tasks) {
@@ -24,7 +24,14 @@ const getAllTasks = async (req, res, next) => {
 
 const createTask = async (req, res, next) => {
 	try {
-		const { title, description, priority, dueDate, dependencies, estimatedDuration } = req.body;
+		const {
+			title,
+			description,
+			priority,
+			dueDate,
+			dependencies,
+			estimatedDuration,
+		} = req.body;
 		// validationService.validateTask({ title, description, priority, dueDate, dependencies });
 
 		const newTask = new Task({
@@ -99,6 +106,27 @@ const updateTask = async (req, res, next) => {
 			return res.status(404).json({ message: "Task not found" });
 		}
 
+
+		// Notify users if the task is marked as COMPLETED
+		if (status === 'COMPLETED') {
+			const completedTasks = task.completedTasks || [];
+			for (let depId of task.dependencies) {
+			  if (!completedTasks.includes(depId)) {
+				const dependentTask = await Task.findById(depId).exec();
+				if (dependentTask && dependentTask.status !== 'COMPLETED') {
+				  await notificationService.sendEmail(
+					dependentTask.assignedTo,
+					'Dependent Task Completed',
+					`Task "${task.title}" has been completed. You can now start working on the dependent task "${dependentTask.title}".`
+				  );
+				  completedTasks.push(depId);
+				}
+			  }
+			}
+			task.completedTasks = completedTasks;
+			await task.save();
+		  }
+		//--------------------------------
 		res.json(task);
 	} catch (error) {
 		console.error("Error in updateTask:", error);
@@ -123,19 +151,19 @@ const deleteTask = async (req, res, next) => {
 };
 
 const getScheduledTasks = async (req, res, next) => {
-    try {
-        const scheduledTasks = await schedulingService.getScheduledTasks();
+	try {
+		const scheduledTasks = await schedulingService.getScheduledTasks();
 		// output in a readable format
-		scheduledTasks.forEach(task => {
-			task.startTime = (new Date(task.startTime)).toLocaleString();
-			task.endTime = (new Date(task.endTime)).toLocaleString();
-		})
+		scheduledTasks.forEach((task) => {
+			task.startTime = new Date(task.startTime).toLocaleString();
+			task.endTime = new Date(task.endTime).toLocaleString();
+		});
 
-        res.json(scheduledTasks);
-    } catch (error) {
+		res.json(scheduledTasks);
+	} catch (error) {
 		console.error("Error in getScheduledTasks:", error);
-        next(error);
-    }
+		next(error);
+	}
 };
 
 // const test = async (req, res, next) => {
