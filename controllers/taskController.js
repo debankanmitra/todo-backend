@@ -3,6 +3,7 @@ const validationService = require("../services/validationService");
 const PriorityService = require("../services/PriorityService");
 const schedulingService = require("../services/schedulingService");
 const notificationService = require("../services/notificationService");
+const CompletedTask = require("../models/completedTaskModel");
 
 const getAllTasks = async (req, res, next) => {
 	try {
@@ -106,27 +107,30 @@ const updateTask = async (req, res, next) => {
 			return res.status(404).json({ message: "Task not found" });
 		}
 
-
 		// Notify users if the task is marked as COMPLETED
-		if (status === 'COMPLETED') {
-			const completedTasks = task.completedTasks || [];
-			for (let depId of task.dependencies) {
-			  if (!completedTasks.includes(depId)) {
-				const dependentTask = await Task.findById(depId).exec();
-				if (dependentTask && dependentTask.status !== 'COMPLETED') {
-				  await notificationService.sendEmail(
-					dependentTask.assignedTo,
-					'Dependent Task Completed',
-					`Task "${task.title}" has been completed. You can now start working on the dependent task "${dependentTask.title}".`
-				  );
-				  completedTasks.push(depId);
+		if (status === "COMPLETED") {
+			// Check if this task ID is already in the CompletedTask collection
+			const isAlreadyCompleted = await CompletedTask.findOne({
+				taskId: task._id,
+			}).exec();
+			if (!isAlreadyCompleted) {
+				// Add the task ID to the CompletedTask collection
+				await CompletedTask.create({ taskId: task._id });
+
+				// Notify users about completed dependencies
+				for (let depId of task.dependencies) {
+					const dependentTask = await Task.findById(depId).exec();
+					if (dependentTask && dependentTask.status !== "COMPLETED") {
+						await notificationService.sendEmail(
+							dependentTask.assignedTo,
+							"Dependent Task Completed",
+							`Task "${task.title}" has been completed. You can now start working on the dependent task "${dependentTask.title}".`
+						);
+					}
 				}
-			  }
 			}
-			task.completedTasks = completedTasks;
-			await task.save();
-		  }
-		//--------------------------------
+		}
+		//----------------Notification----------------
 		res.json(task);
 	} catch (error) {
 		console.error("Error in updateTask:", error);
