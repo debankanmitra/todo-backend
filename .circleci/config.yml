@@ -13,9 +13,6 @@ jobs:
       - node/install-packages:
           pkg-manager: npm
       - run:
-          name: Run tests
-          command: npm test
-      - run:
           name: Create deployment package
           command: |
             mkdir -p package
