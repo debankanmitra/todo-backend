@@ -17,7 +17,16 @@ jobs:
           name: Create deployment package
           command: |
             mkdir -p package
-            cp -r . package/
+            cp -r node_modules package/
+            cp -r config package/
+            cp -r controllers package/
+            cp -r middlewares package/
+            cp -r models package/
+            cp -r routes package/
+            cp -r services package/
+            cp -r utils package/
+            cp -r app.js package/
+            cp package.json package/
             cd package
             zip -r ../lambda_function.zip .
       - run:
