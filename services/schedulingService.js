@@ -1,6 +1,6 @@
 const Task = require('../models/taskModel');
 
-// Helper function to calculate end time based on start time and duration
+// calculate the end time of a task based on its start time and duration.
 const calculateEndTime = (startTime, duration) => {
     const endTime = new Date(startTime);
     endTime.setHours(endTime.getHours() + duration);
@@ -9,8 +9,8 @@ const calculateEndTime = (startTime, duration) => {
 
 // Main scheduling function
 const getScheduledTasks = async () => {
+    // Fetch Pending Tasks
     const tasks = await Task.find({ status: 'PENDING' }).exec();
-    // console.log('Scheduling tasks...', tasks);
 
     // Sort tasks based on priority and due date
     tasks.sort((a, b) => {
@@ -25,11 +25,11 @@ const getScheduledTasks = async () => {
     const scheduledTasks = [];
     const taskMap = new Map();
 
-    // Assign start and end times
+    // Assign start and end times to each task
     tasks.forEach(task => {
         let earliestStartTime = new Date();
 
-        // Find the earliest possible start time considering dependencies
+        // checking dependencies to ensure that a task starts only after all its dependencies have been completed.
         task.dependencies.forEach(depId => {
             const depTask = taskMap.get(depId);
             if (depTask && depTask.endTime > earliestStartTime) {
