@@ -17,9 +17,7 @@ jobs:
           name: Create deployment package
           command: |
             mkdir -p package
-            cp -r node_modules package/
-            cp -r src package/
-            cp package.json package/
+            cp -r . package/
             cd package
             zip -r ../lambda_function.zip .
       - run:
