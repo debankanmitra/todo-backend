@@ -1,4 +1,4 @@
-// array containing all completed tasks
+// array containing all completed tasks, each task is an object with task id
 const mongoose = require('mongoose');
 
 const completedTaskSchema = new mongoose.Schema({

@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const { PRIORITY, STATUS } = require('../utils/enums');
 
+
+// Model - Task for CRUD
 const taskSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },

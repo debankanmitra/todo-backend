@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const Task = require('../models/task');
+const Task = require('../models/taskModel');
 const notificationService = require('../services/notificationService');
 
 const notifyUpcomingDeadlines = async () => {

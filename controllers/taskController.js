@@ -10,6 +10,7 @@ const getAllTasks = async (req, res, next) => {
 		data = [];
 		const tasks = await Task.find();
 
+		// Dynamically calculating priority for each task
 		for (let task of tasks) {
 			score = await PriorityService.CalculatePriorityScore(task);
 			data.push({
@@ -17,6 +18,11 @@ const getAllTasks = async (req, res, next) => {
 				priority: score,
 			});
 		}
+
+		// Sorting the tasks based on priority
+		data.sort((a, b) => {
+			return a.priority - b.priority;
+		});
 		res.json(data);
 	} catch (error) {
 		next(error);
@@ -33,7 +39,6 @@ const createTask = async (req, res, next) => {
 			dependencies,
 			estimatedDuration,
 		} = req.body;
-		// validationService.validateTask({ title, description, priority, dueDate, dependencies });
 
 		const newTask = new Task({
 			title,
@@ -45,9 +50,6 @@ const createTask = async (req, res, next) => {
 		});
 		await newTask.save();
 
-		// await schedulingService.scheduleTasks();
-		// notificationService.setupNotifications(newTask);
-
 		res.status(201).json(newTask);
 	} catch (error) {
 		next(error);
@@ -56,11 +58,19 @@ const createTask = async (req, res, next) => {
 
 const getTaskById = async (req, res, next) => {
 	try {
+		data = [];
 		const task = await Task.findById(req.params.id);
 		if (!task) {
 			return res.status(404).json({ message: "Task not found" });
 		}
-		res.json(task);
+
+		// Dynamically calculating priority for single task
+		score = await PriorityService.CalculatePriorityScore(task);
+		data.push({
+			task,
+			priority: score,
+		});
+		res.json(data);
 	} catch (error) {
 		next(error);
 	}
@@ -140,13 +150,28 @@ const updateTask = async (req, res, next) => {
 
 const deleteTask = async (req, res, next) => {
 	try {
-		const task = await Task.findByIdAndDelete(req.params.id);
+		const taskId = req.params.id;
+		console.log("task id", taskId);
+		// Delete the task from the database
+		const task = await Task.findByIdAndDelete(taskId);
 		if (!task) {
 			return res.status(404).json({ message: "Task not found" });
 		}
 
-		// await schedulingService.scheduleTasks();
-		// notificationService.cancelNotifications(task);
+		// Update dependencies of all tasks
+		const tasks = await Task.find({ dependencies: taskId });
+		for (const task of tasks) {
+			const updatedDependencies = task.dependencies;
+			updatedDependencies.pop(taskId);
+			// console.log("updated dependencies",updatedDependencies);
+			task.dependencies = updatedDependencies;
+			await task.save();
+			// console.log(`Updated task ${task._id} with dependencies: ${task.dependencies}`);
+		}
+
+		// Delete the task from the CompletedTask collection
+		await CompletedTask.deleteOne({ taskId }).exec();
+		console.log("task deleted", taskId);
 
 		res.status(204).json({ message: "Task deleted" });
 	} catch (error) {
@@ -170,6 +195,7 @@ const getScheduledTasks = async (req, res, next) => {
 	}
 };
 
+// FOR EXPERIMENTATION
 // const test = async (req, res, next) => {
 //     res.json({ message: 'Task controller is working' });
 // };

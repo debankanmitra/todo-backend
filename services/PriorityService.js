@@ -1,3 +1,10 @@
+/**
+ * Task Prioritization:✅️
+ * User-defined priority
+ * Due date proximity
+ * Number of dependencies
+ */
+
 // Lower the Score of tasks higher will be the priority
 const CalculatePriorityScore = async (task) => {
 	// Initialize priority score
