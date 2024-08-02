@@ -127,17 +127,15 @@ const updateTask = async (req, res, next) => {
 				// Add the task ID to the CompletedTask collection
 				await CompletedTask.create({ taskId: task._id });
 
-				// Notify users about completed dependencies
-				for (let depId of task.dependencies) {
-					const dependentTask = await Task.findById(depId).exec();
-					if (dependentTask && dependentTask.status !== "COMPLETED") {
-						await notificationService.sendEmail(
-							dependentTask.assignedTo,
-							"Dependent Task Completed",
-							`Task "${task.title}" has been completed. You can now start working on the dependent task "${dependentTask.title}".`
-						);
-					}
-				}
+				// Notify users about completed task and dependent tasks
+				const dependentTask = await Task.find({ dependencies: task._id });
+				console.log("dependentTask",dependentTask);
+				await notificationService.sendEmail(
+					"Task Completed",
+					`Task "${task.title}" has been completed. You can now start working on the dependent tasks: ${dependentTask
+						.map((task) => task.title)
+						.join(", ")}.`
+				)
 			}
 		}
 		//----------------Notification----------------

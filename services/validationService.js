@@ -19,6 +19,8 @@ const Validate = async (task) => {
 	return true;
 };
 
+
+// Check if all dependencies are completed ( task can only be completed if its dependencies are also completed)
 const CheckCompletion = async (dependencies) => {
 	for (let dep of dependencies) {
 		const subtask = await Task.findById(dep).exec();
