@@ -9,9 +9,11 @@ jobs:
     docker:
       - image: circleci/node:14.17.0
     steps:
+     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: npm
+      - run:
+          name: Install dependencies
+          command: npm install
       - run:
           name: Create deployment package
           command: |
